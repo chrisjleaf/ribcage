@@ -8,24 +8,29 @@ define([
   return Backbone.Model.extend({
     whitelist: null, 
     blacklist: null,
-    toJSON: function(options){
-      var obj = _.clone(this.attributes);
+    filter: function(attrs){
+      var obj = _.clone(attrs);
       if(this.whitelist !== null)
         obj = _.pick(obj, this.whitelist);
       if(this.blacklist !== null)
         obj = _.omit(obj, this.blacklist);
       return obj;
+    }, 
+    toJSON: function(options){
+      return this.filter(this.attributes);
     },
     // Override this from the model, gets all attributes
     // Need to return at least the new attributes, but can just extend.
-    refresh: function(attrs){
+    refresh: function(updates, attrs){
       return {};
     }, 
     update: function(){
       this.set({}); 
     },
     derivedlist: null,
-    set: function(key,val,options){
+    set: function(k,v,options){
+      var key = _.clone(k)
+         ,val = _.clone(v); 
       var attrs;
       if (typeof key === 'object') {
         attrs = key;
@@ -35,7 +40,7 @@ define([
       }
       var tempAttrs = _.extend({}, this.attributes,attrs);
       tempAttrs = _.defaults(tempAttrs, this.defaults);
-      attrs = _.extend(attrs, this.refresh(tempAttrs));
+      _.extend(attrs, this.refresh(attrs, tempAttrs));
       return parent.prototype.set.apply(this,[attrs, options]);
     }
   });
